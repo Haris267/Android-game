@@ -179,7 +179,7 @@ h1{font-family:var(--font-display); font-weight:800; font-size:1.6rem; line-heig
   function showQuestion(){
     var item = QUESTIONS[idx], opts = $("opts"), i;
     locked = false;
-    order = shuffle([0,1,2,3]);
+    order = shuffle([0,1,2,3,4]);
     $("counter").textContent = "Soal " + (idx + 1) + " / " + QUESTIONS.length;
     $("bar").style.width = (idx / QUESTIONS.length * 100) + "%";
     $("question").textContent = item.q;
