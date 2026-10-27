@@ -1,0 +1,266 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kuis Tiga Nyawa</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: satu kartu kuis di tengah, header berisi nyawa + skor, pilihan jawaban bertumpuk, hasil muncul sebagai dialog */
+:root{
+  --bg:#e6f2f1; --card:#ffffff; --fg:#12303a; --muted:#587680; --line:#c9dedd;
+  --accent:#1f7a8c; --accent-fg:#ffffff; --sun:#f2b705;
+  --ok:#23824c; --ok-bg:#d9f1e2; --bad:#c43d3d; --bad-bg:#f8dcdc;
+  --shadow:rgba(18,48,58,.14);
+  --font-display:"Baloo 2","Trebuchet MS",sans-serif;
+  --font-body:"Nunito","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e2127; --card:#16323a; --fg:#e8f3f2; --muted:#8fb0b6; --line:#27484f;
+    --accent:#4cc3d6; --accent-fg:#0e2127; --sun:#f6c93a;
+    --ok:#5fd08c; --ok-bg:#1c4a32; --bad:#ff8080; --bad-bg:#5a2626;
+    --shadow:rgba(0,0,0,.4); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e2127; --card:#16323a; --fg:#e8f3f2; --muted:#8fb0b6; --line:#27484f;
+  --accent:#4cc3d6; --accent-fg:#0e2127; --sun:#f6c93a;
+  --ok:#5fd08c; --ok-bg:#1c4a32; --bad:#ff8080; --bad-bg:#5a2626;
+  --shadow:rgba(0,0,0,.4); color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:16px; line-height:1.5;
+  padding-block:20px 32px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap{max-width:560px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+header{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+h1{font-family:var(--font-display); font-weight:800; font-size:1.6rem; line-height:1.1; margin:0; text-wrap:balance}
+.stats{display:flex; align-items:center; gap:16px}
+.lives{display:flex; gap:4px}
+.heart{width:28px; height:28px; transition:transform .2s}
+.heart path{fill:#e5484d; stroke:#e5484d; stroke-width:1.5; transition:fill .25s}
+.heart.lost path{fill:transparent; stroke:var(--muted)}
+.heart.hit{animation:hit .5s}
+@keyframes hit{0%{transform:scale(1)}30%{transform:scale(1.35) rotate(-8deg)}60%{transform:scale(.8) rotate(6deg)}100%{transform:scale(1)}}
+.score{font-family:var(--font-display); font-weight:800; font-size:1.2rem; font-variant-numeric:tabular-nums; min-width:5.5ch; text-align:right}
+.score small{display:block; font-family:var(--font-body); font-weight:700; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.progress{height:10px; background:var(--line); border-radius:99px; overflow:hidden}
+.progress i{display:block; height:100%; width:0; background:var(--sun); border-radius:99px; transition:width .4s}
+.meta{display:flex; justify-content:space-between; font-size:.8rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.card{background:var(--card); border-radius:20px; padding:22px; box-shadow:0 6px 0 var(--shadow); display:flex; flex-direction:column; gap:18px}
+.q{font-family:var(--font-display); font-weight:600; font-size:1.45rem; line-height:1.25; margin:0; text-wrap:balance}
+.opts{display:flex; flex-direction:column; gap:10px}
+.opt{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+  font:inherit; font-weight:700; color:var(--fg); background:var(--card);
+  border:2px solid var(--line); border-radius:14px; padding:12px 14px; min-height:52px;
+  transition:border-color .15s, background .15s, transform .1s;
+}
+.opt:hover:not(:disabled){border-color:var(--accent); transform:translateY(-1px)}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.opt b{
+  flex:none; width:30px; height:30px; border-radius:9px; display:grid; place-items:center;
+  background:var(--line); font-family:var(--font-display); font-size:.95rem;
+}
+.opt:disabled{cursor:default}
+.opt.ok{background:var(--ok-bg); border-color:var(--ok)}
+.opt.ok b{background:var(--ok); color:var(--card)}
+.opt.bad{background:var(--bad-bg); border-color:var(--bad); animation:shake .35s}
+.opt.bad b{background:var(--bad); color:var(--card)}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.foot{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; flex-wrap:wrap}
+.msg{font-weight:800; margin:0; flex:1; min-width:0}
+.msg.ok{color:var(--ok)} .msg.bad{color:var(--bad)}
+.btn{
+  font:inherit; font-family:var(--font-display); font-weight:800; font-size:1.05rem; cursor:pointer;
+  background:var(--accent); color:var(--accent-fg); border:0; border-radius:12px; padding:10px 22px;
+  box-shadow:0 4px 0 var(--shadow); transition:transform .1s;
+}
+.btn:active{transform:translateY(2px); box-shadow:0 2px 0 var(--shadow)}
+.btn.ghost{background:transparent; color:var(--fg); border:2px solid var(--line); box-shadow:none}
+.overlay{
+  position:fixed; inset:0; z-index:20; display:grid; place-items:center;
+  background:rgba(8,22,27,.62);
+  padding:16px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px));
+}
+.modal{
+  background:var(--card); border-radius:24px; padding:28px 24px; width:100%; max-width:400px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:10px; box-shadow:0 10px 0 var(--shadow);
+  animation:pop .35s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes pop{from{transform:scale(.8); opacity:0}to{transform:scale(1); opacity:1}}
+.modal h2{font-family:var(--font-display); font-weight:800; font-size:2rem; line-height:1.1; margin:0}
+.modal.win h2{color:var(--ok)} .modal.lose h2{color:var(--bad)}
+.modal p{margin:0; color:var(--muted); font-weight:700}
+.big{font-family:var(--font-display); font-weight:800; font-size:4rem; line-height:1; font-variant-numeric:tabular-nums}
+.big span{font-size:1.4rem; color:var(--muted)}
+.modal .btn{margin-top:10px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important; transition:none!important}}
+@media (max-width:420px){.q{font-size:1.25rem} .card{padding:18px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Kuis Tiga Nyawa</h1>
+    <div class="stats">
+      <div class="lives" id="lives" role="img" aria-label="Nyawa"></div>
+      <div class="score" id="score" aria-live="polite"><small>Skor</small>0</div>
+    </div>
+  </header>
+
+  <div>
+    <div class="meta"><span id="counter">Soal 1 / 10</span><span>10 poin per soal</span></div>
+    <div class="progress" style="margin-top:6px"><i id="bar"></i></div>
+  </div>
+
+  <main class="card">
+    <h2 class="q" id="question"></h2>
+    <div class="opts" id="opts"></div>
+    <div class="foot">
+      <p class="msg" id="msg" aria-live="polite"></p>
+      <button class="btn" id="next" hidden>Lanjut</button>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+    <h2 id="mtitle"></h2>
+    <p id="mtext"></p>
+    <div class="big" id="mscore"></div>
+    <p id="mnote"></p>
+    <button class="btn" id="again">Main lagi</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var QUESTIONS = [
+    {q:"Berapa hasil dari 7 + 8?", a:["13","14","15","16"], c:2},
+    {q:"Hewan apa yang dijuluki raja hutan?", a:["Singa","Kelinci","Kucing","Kambing"], c:0},
+    {q:"Apa warna bendera Indonesia?", a:["Biru dan putih","Merah dan putih","Hijau dan kuning","Merah dan hitam"], c:1},
+    {q:"Berapa jumlah hari dalam satu minggu?", a:["5","6","7","8"], c:2},
+    {q:"Planet tempat kita tinggal bernama apa?", a:["Mars","Venus","Jupiter","Bumi"], c:3},
+    {q:"Siapa pencipta lagu Indonesia Raya?", a:["Ismail Marzuki","W.R. Supratman","Ki Hajar Dewantara","Ibu Sud"], c:1},
+    {q:"Air membeku pada suhu berapa derajat Celsius?", a:["0","10","50","100"], c:0},
+    {q:"Hewan apa yang menghasilkan susu sapi?", a:["Kerbau","Kambing","Domba","Sapi"], c:3},
+    {q:"Berapa hasil dari 6 × 4?", a:["20","24","26","28"], c:1},
+    {q:"Hari Kemerdekaan Indonesia diperingati setiap tanggal berapa?", a:["1 Juni","10 November","17 Agustus","28 Oktober"], c:2}
+  ];
+  var MAX_LIVES = 3, POINTS = 10, LABELS = ["A","B","C","D"];
+  var idx, lives, score, locked, order;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var HEART = '<svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 2.7 5 6.1 5c2.1 0 3.7 1.2 4.6 2.7h2.6C14.2 6.2 15.8 5 17.9 5c3.4 0 5.2 3.5 3.7 6.8C19.5 16.4 12 21 12 21z"/></svg>';
+
+  function shuffle(arr){
+    var a = arr.slice(), i, j, t;
+    for(i = a.length - 1; i > 0; i--){
+      j = Math.floor(Math.random() * (i + 1));
+      t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function renderLives(hitIndex){
+    var html = "", i;
+    for(i = 0; i < MAX_LIVES; i++){
+      html += HEART.replace('class="heart"', 'class="heart' + (i >= lives ? " lost" : "") + (i === hitIndex ? " hit" : "") + '"');
+    }
+    $("lives").innerHTML = html;
+    $("lives").setAttribute("aria-label", "Nyawa tersisa " + lives + " dari " + MAX_LIVES);
+  }
+
+  function renderScore(){
+    $("score").innerHTML = "<small>Skor</small>" + score;
+  }
+
+  function showQuestion(){
+    var item = QUESTIONS[idx], opts = $("opts"), i;
+    locked = false;
+    order = shuffle([0,1,2,3]);
+    $("counter").textContent = "Soal " + (idx + 1) + " / " + QUESTIONS.length;
+    $("bar").style.width = (idx / QUESTIONS.length * 100) + "%";
+    $("question").textContent = item.q;
+    $("msg").textContent = "";
+    $("msg").className = "msg";
+    $("next").hidden = true;
+    opts.innerHTML = "";
+    order.forEach(function(origIdx, pos){
+      var b = document.createElement("button");
+      b.className = "opt";
+      b.type = "button";
+      b.dataset.orig = origIdx;
+      var tag = document.createElement("b");
+      tag.textContent = LABELS[pos];
+      var txt = document.createElement("span");
+      txt.textContent = item.a[origIdx];
+      b.appendChild(tag);
+      b.appendChild(txt);
+      b.addEventListener("click", function(){ answer(b, origIdx); });
+      opts.appendChild(b);
+    });
+  }
+
+  function answer(btn, origIdx){
+    if(locked) return;
+    locked = true;
+    var item = QUESTIONS[idx], right = origIdx === item.c;
+    var buttons = $("opts").children, i;
+    for(i = 0; i < buttons.length; i++){
+      buttons[i].disabled = true;
+      if(Number(buttons[i].dataset.orig) === item.c) buttons[i].classList.add("ok");
+    }
+    if(right){
+      score += POINTS;
+      renderScore();
+      $("msg").textContent = "Benar! +" + POINTS + " poin";
+      $("msg").className = "msg ok";
+    } else {
+      btn.classList.add("bad");
+      lives -= 1;
+      renderLives(lives);
+      $("msg").textContent = lives > 0 ? "Salah. Nyawa berkurang satu." : "Salah. Nyawa habis.";
+      $("msg").className = "msg bad";
+    }
+    var last = idx === QUESTIONS.length - 1;
+    if(lives <= 0){
+      setTimeout(function(){ finish(false); }, 1100);
+    } else if(last){
+      setTimeout(function(){ finish(true); }, 1100);
+    } else {
+      $("next").hidden = false;
+      $("next").focus();
+    }
+  }
+
+  function finish(won){
+    $("bar").style.width = (won ? 100 : (idx / QUESTIONS.length * 100)) + "%";
+    var modal = $("modal");
+    modal.className = "modal " + (won ? "win" : "lose");
+    $("mtitle").textContent = won ? "Kamu menang!" : "Game over";
+    $("mtext").textContent = won ? "Semua soal selesai dan nyawa masih tersisa " + lives + "." : "Nyawamu habis di soal " + (idx + 1) + ".";
+    $("mscore").innerHTML = score + "<span> / " + (QUESTIONS.length * POINTS) + "</span>";
+    $("mnote").textContent = won
+      ? (score === QUESTIONS.length * POINTS ? "Sempurna, tanpa satu pun salah!" : "Skor akhirmu sudah masuk. Coba lagi untuk skor sempurna.")
+      : "Skor akhirmu di atas. Coba lagi, kamu pasti bisa.";
+    $("overlay").hidden = false;
+    $("again").focus();
+  }
+
+  function start(){
+    idx = 0; lives = MAX_LIVES; score = 0;
+    $("overlay").hidden = true;
+    renderLives(-1);
+    renderScore();
+    showQuestion();
+  }
+
+  $("next").addEventListener("click", function(){ idx += 1; showQuestion(); });
+  $("again").addEventListener("click", start);
+  start();
+})();
+</script>
+
+</body></html>
